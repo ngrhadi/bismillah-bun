@@ -13,7 +13,7 @@ WORKDIR /app
 # Install dependencies skip cypress install binary for production
 COPY package.json pnpm-lock.yaml* ./
 # RUN CYPRESS_INSTALL_BINARY=0 SENTRY_NO_PROGRESS_BAR=true pnpm install
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 # Rebuild the source code only when needed
 FROM base AS builder
