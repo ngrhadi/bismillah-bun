@@ -27,9 +27,9 @@ import {
   BsAlarm,
   BsBookHalf,
   BsFire,
+  BsLightningFill,
   BsMoonStarsFill,
   BsRocket,
-  BsSunrise,
   BsUmbrella,
 } from 'react-icons/bs';
 import Draggable from 'react-draggable';
@@ -40,6 +40,7 @@ import {
   differenceInCalendarYears,
 } from 'date-fns';
 import formatCurrency from '@/utils/formatCurrency';
+import Formulir from '@/components/Formulir';
 
 interface DataTypeTodo {
   id: string;
@@ -136,8 +137,8 @@ export default function Home() {
   };
 
   const handleDragStop = () => {
-    setPosition({ x: 120, y: 0 });
-    setPositionOffset({ x: 10, y: 0 });
+    setPosition({ x: 112, y: 0 });
+    setPositionOffset({ x: 15, y: 0 });
     setIsDragging(false);
   };
 
@@ -160,29 +161,48 @@ export default function Home() {
     setShowButton(false);
   };
 
+  const handleTogleAccordion = () => {
+    setPosition({ x: 0, y: 0 });
+    setPositionOffset({ x: 0, y: 0 });
+    setShowButton(false);
+  };
+
   return (
     <Container maxW="container.sm">
       <Heading p={3}>
         <Flex justifyContent="space-between" alignItems="center">
-          <Text fontWeight="bold" fontSize="2xl">
+          <Text fontWeight="semibold" fontSize={['xl', 'xl', '2xl', '2xl']}>
             Bismillah Project
           </Text>
-          <Button bg="transparent" onClick={toggleColorMode}>
+          <IconButton
+            aria-label="color-view"
+            bg="transparent"
+            fontWeight="bold"
+            icon={
+              <Icon
+                as={colorMode === 'light' ? BsMoonStarsFill : BsLightningFill}
+              />
+            }
+            onClick={toggleColorMode}
+          />
+          {/* <Button bg="transparent" onClick={toggleColorMode}>
             {colorMode === 'dark' ? <BsMoonStarsFill /> : <BsSunrise />}
-          </Button>
+          </Button> */}
         </Flex>
       </Heading>
-      <Box mt={5} p={2} rounded="md" shadow="2xl">
+      <Box mt={[2, 2, 5, 5]} p={2} rounded="md" shadow="2xl">
         <Tabs position="relative" variant="unstyled" isFitted>
           <TabList>
             <Tab
               rounded="md"
+              fontSize={['sm', 'sm', 'md', 'md']}
               _selected={{ bg: colorMode === 'dark' ? 'gray.600' : 'gray.300' }}
             >
               <Icon as={BsRocket} mr={2} /> Daftar Bismillah
             </Tab>
             <Tab
               rounded="md"
+              fontSize={['sm', 'sm', 'md', 'md']}
               _selected={{ bg: colorMode === 'dark' ? 'gray.600' : 'gray.300' }}
             >
               <Icon as={BsBookHalf} mr={2} />
@@ -198,7 +218,11 @@ export default function Home() {
           />
           <TabPanels>
             <TabPanel>
-              <Accordion defaultIndex={[0]} allowToggle>
+              <Accordion
+                defaultIndex={[0]}
+                allowToggle
+                onChange={handleTogleAccordion}
+              >
                 {/* ALARAM = PERINGATAN */}
                 {dataTodo.map((item) => {
                   const isViewDeadline = handleSetingDedline(item.deadline);
@@ -254,17 +278,20 @@ export default function Home() {
                                 }
                               />
                             </Tooltip>
-                            <Text fontSize="md" fontWeight="bold">
+                            <Text
+                              fontWeight="bold"
+                              fontSize={['sm', 'sm', 'md', 'md']}
+                            >
                               {item.title}
                             </Text>
                           </Flex>
                         </Box>
                         <AccordionIcon />
                       </AccordionButton>
-                      <AccordionPanel pb={4}>
+                      <AccordionPanel>
                         {showButton && (
                           <Box
-                            w={['25%', '22%', '20%', '20%']}
+                            w={['34%', '22%', '20%', '20%']}
                             minH="40"
                             position="absolute"
                             zIndex={5}
@@ -272,6 +299,7 @@ export default function Home() {
                             <SimpleGrid columns={1} gap={2} color="black">
                               <Button
                                 bg="red.300"
+                                fontSize={['sm', 'sm', 'md', 'md']}
                                 w="full"
                                 h="14"
                                 onClick={() => handleDeleteTodo(item.id)}
@@ -281,6 +309,7 @@ export default function Home() {
                               <Button
                                 bg="green.300"
                                 w="full"
+                                fontSize={['sm', 'sm', 'md', 'md']}
                                 h="14"
                                 onClick={handleCancelDrag}
                               >
@@ -288,6 +317,7 @@ export default function Home() {
                               </Button>
                               <Button
                                 bg="green.500"
+                                fontSize={['sm', 'sm', 'md', 'md']}
                                 w="full"
                                 h="14"
                                 onClick={() => handleConfirmTodo(item.id)}
@@ -306,20 +336,24 @@ export default function Home() {
                           onStop={handleDragStop}
                         >
                           <Box
+                            bgGradient="linear(to-r, white,rgba(255,255,255,0.3))"
                             position="relative"
-                            minH="52"
-                            minW={isDragging ? '60%' : '100%'}
+                            minH={['80', '80', '52', '52']}
                             overflowY="scroll"
+                            zIndex={10}
                           >
                             <motion.div
-                              style={{ width: isDragging ? `60%` : '100%' }} // Animate the width
+                              style={{
+                                width: isDragging ? `60%` : '50%',
+                              }} // Animate the width
                               animate={controls}
                             >
                               <Box
                                 minW="full"
                                 onDoubleClick={() => setIsDragging(false)}
                                 position="absolute"
-                                zIndex={2}
+                                zIndex={10}
+                                fontSize={['sm', 'sm', 'md', 'md']}
                               >
                                 <Text fontWeight="semibold">
                                   Deskripsi Kebutuhan :
@@ -373,7 +407,7 @@ export default function Home() {
               </Accordion>
             </TabPanel>
             <TabPanel>
-              <p>two!</p>
+              <Formulir />
             </TabPanel>
           </TabPanels>
         </Tabs>
