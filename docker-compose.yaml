@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  next-app:
+    container_name: bismillah-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 3310:3310
+    networks:
+      - my_network
+  # Add more containers below (nginx, postgres, etc.)
+
+# Define a network, which allows containers to communicate
+# with each other, by using their container name as a hostname
+networks:
+  my_network:
+    external: true

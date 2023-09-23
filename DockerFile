@@ -1,0 +1,62 @@
+# syntax = docker/dockerfile:experimental
+
+FROM node:18-alpine AS base
+
+RUN npm install --global --no-update-notifier --no-fund pnpm
+
+# Install dependencies only when needed
+FROM base AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies skip cypress install binary for production
+COPY package.json pnpm-lock.yaml* ./
+# RUN CYPRESS_INSTALL_BINARY=0 SENTRY_NO_PROGRESS_BAR=true pnpm install
+RUN pnpm install --frozen-lockfile
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line in case you want to disable telemetry during the build.
+# ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN pnpm build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+# Uncomment the following line in case you want to disable telemetry during runtime.
+# ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Modyfing the server.js file to increase the keepAliveTimeout and headersTimeout values to 70 seconds (default is 5 seconds) to avoid timout errors. https://github.com/vercel/next.js/discussions/28642#discussioncomment-4820829
+RUN echo -e "\n\
+  const KEEP_ALIVE_TIMEOUT = 70 * 1000;\n\
+  startServer.keepAliveTimeout = KEEP_ALIVE_TIMEOUT;\n\
+  startServer.headersTimeout = KEEP_ALIVE_TIMEOUT * 1.1;\n\
+  " >>server.js
+
+USER nextjs
+
+EXPOSE 3310
+
+ENV PORT 3310
+
+CMD ["node", "server.js"]
