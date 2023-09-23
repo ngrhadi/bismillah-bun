@@ -1,11 +1,11 @@
 version: '3'
 
 services:
-  next-app:
+  bismillah-app:
     container_name: bismillah-app
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: DockerFile
     restart: always
     ports:
       - 3310:3310
