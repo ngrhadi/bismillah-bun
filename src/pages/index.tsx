@@ -16,15 +16,22 @@ import {
   Tab,
   TabIndicator,
   TabList,
+  Tr,
+  Td,
+  Th,
   TabPanel,
   TabPanels,
+  Table,
   Tabs,
+  Tbody,
   Text,
+  Thead,
   Tooltip,
   useColorMode,
 } from '@chakra-ui/react';
 import {
   BsAlarm,
+  BsBagHeart,
   BsBookHalf,
   BsFire,
   BsLightningFill,
@@ -34,56 +41,43 @@ import {
 } from 'react-icons/bs';
 import Draggable from 'react-draggable';
 import { motion, useAnimation } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   differenceInCalendarMonths,
   differenceInCalendarYears,
 } from 'date-fns';
 import formatCurrency from '@/utils/formatCurrency';
-import Formulir from '@/components/Formulir';
+import Formulir, { Inputs } from '@/components/Formulir';
+import { apiClient } from '@/store/api';
+import { NextPageContext } from 'next';
+import { NextPageWithLayout } from '@/utils/page';
+import { TodosType } from '@/types/todos';
+import { useAppToast } from '@/utils/useAppToast';
 
-interface DataTypeTodo {
-  id: string;
-  title: string;
-  description: string;
-  budget: number;
-  deadline: string;
-  tags: string[];
-}
+const Home = ({
+  todos,
+  itemDone,
+}: {
+  todos: TodosType[];
+  itemDone: TodosType[];
+}) => {
+  const { successToast, errorToast, infoToast } = useAppToast();
 
-const intialData: DataTypeTodo[] = [
-  {
-    id: '112scvawe',
-    title: 'Beli Emas',
-    description:
-      'Lorem ipsum dolor, sit amet consectetur adipisicing elit. Voluptatum reprehenderit quos, maxime voluptatibus officia tempora perferendis blanditiis officiis provident culpa molestiae ipsum explicabo harum porro quibusdam cumque eaque quis fuga.',
-    budget: 20000000,
-    deadline: '12-12-2024',
-    tags: [`{"label":"nikah", "color":"red"}`],
-  },
-  {
-    id: 'asdf2312ed',
-    title: 'Liburan',
-    description:
-      'Lorem ipsum dolor, sit amet consectetur adipisicing elit. Voluptatum reprehenderit quos, maxime voluptatibus officia tempora perferendis blanditiis officiis provident culpa molestiae ipsum explicabo harum porro quibusdam cumque eaque quis fuga.',
-    budget: 10950000,
-    deadline: '9-12-2023',
-    tags: [`{"label":"holiday", "color":"blue"}`],
-  },
-  {
-    id: 'aadf23145523',
-    title: 'Bangun Rumah',
-    description:
-      'Lorem ipsum dolor, sit amet consectetur adipisicing elit. Voluptatum reprehenderit quos, maxime voluptatibus officia tempora perferendis blanditiis officiis provident culpa molestiae ipsum explicabo harum porro quibusdam cumque eaque quis fuga.',
-    budget: 200000000,
-    deadline: '10-12-2022',
-    tags: [`{"label":"urip", "color":"orange"}`],
-  },
-];
-
-export default function Home() {
   const { colorMode, toggleColorMode } = useColorMode();
-  const [dataTodo, setDataTodo] = useState<DataTypeTodo[]>(intialData);
+  const [dataTodo, setDataTodo] = useState<TodosType[]>(todos);
+  const [doneTodo, setDoneTodo] = useState<TodosType[]>(itemDone);
+
+  useEffect(() => {
+    if (todos) {
+      setDataTodo(todos);
+    }
+
+    if (itemDone) {
+      setDoneTodo(itemDone);
+    }
+    return () => {};
+  }, [todos, itemDone]);
+
   const [width, setWidth] = useState(300); // Initial width of the Box
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -92,6 +86,8 @@ export default function Home() {
   const [deadlineView, setDeadlineView] = useState<
     'PAYUNG' | 'ALARAM' | 'FIRE'
   >();
+
+  console.log(doneTodo, 'todos');
 
   const [showButton, setShowButton] = useState(false);
   const controls = useAnimation(); // Framer Motion animation controls
@@ -148,17 +144,46 @@ export default function Home() {
     setShowButton(false);
   };
 
-  const handleDeleteTodo = (id: string) => {
+  const handleDeleteTodo = (id: number) => {
     setDataTodo((prev) => prev.filter((data) => data.id !== id));
     setPosition({ x: 0, y: 0 });
     setPositionOffset({ x: 0, y: 0 });
     setShowButton(false);
+    return apiClient
+      .delete(`/api/todos-bismillah?id=${id}`)
+      .then((res) => {
+        successToast({
+          description:
+            'Doamu berhasil di hapus.., Semoga di ganti di alin waktu ya 😻',
+        });
+
+        return res.data?.data;
+      })
+      .catch(() => {
+        errorToast({
+          description: 'Terdapat kesalahan nih, cek lagi ya 👻',
+        });
+      });
   };
 
-  const handleConfirmTodo = (id: string) => {
+  const handleConfirmTodo = (id: number) => {
     setPosition({ x: 0, y: 0 });
     setPositionOffset({ x: 0, y: 0 });
     setShowButton(false);
+    return apiClient
+      .patch(`/api/todos-bismillah?id=${id}`)
+      .then((res) => {
+        successToast({
+          description: 'Selamat doamu tercapai.., Semangat terus ya 😻',
+        });
+
+        return res.data?.data;
+      })
+      .catch(() => {
+        errorToast({
+          description: 'Terdapat kesalahan nih, cek lagi ya 👻',
+        });
+      });
   };
 
   const handleTogleAccordion = () => {
@@ -195,19 +220,34 @@ export default function Home() {
           <TabList>
             <Tab
               rounded="md"
+              display="flex"
+              flexDir={['column', 'column', 'row', 'row']}
               fontSize={['sm', 'sm', 'md', 'md']}
               _selected={{ bg: colorMode === 'dark' ? 'gray.600' : 'gray.300' }}
             >
-              <Icon as={BsRocket} mr={2} /> Daftar Bismillah
+              <Icon as={BsRocket} mr={[0, 0, 2, 2]} mb={[2, 2, 0, 0]} /> Daftar
+              Bismillah
             </Tab>
             <Tab
               rounded="md"
+              display="flex"
+              flexDir={['column', 'column', 'row', 'row']}
               fontSize={['sm', 'sm', 'md', 'md']}
               _selected={{ bg: colorMode === 'dark' ? 'gray.600' : 'gray.300' }}
             >
-              <Icon as={BsBookHalf} mr={2} />
+              <Icon as={BsBookHalf} mr={[0, 0, 2, 2]} mb={[2, 2, 0, 0]} />
               Tambahkan Doa
             </Tab>
+            {/* <Tab
+              rounded="md"
+              display="flex"
+              flexDir={['column', 'column', 'row', 'row']}
+              fontSize={['sm', 'sm', 'md', 'md']}
+              _selected={{ bg: colorMode === 'dark' ? 'gray.600' : 'gray.300' }}
+            >
+              <Icon as={BsBagHeart} mr={[0, 0, 2, 2]} mb={[2, 2, 0, 0]} />
+              Doa Terkabul
+            </Tab> */}
           </TabList>
           <TabIndicator
             // bg={colorMode === 'dark' ? 'gray.200' : 'gray.200'}
@@ -336,7 +376,11 @@ export default function Home() {
                           onStop={handleDragStop}
                         >
                           <Box
-                            bgGradient="linear(to-r, white,rgba(255,255,255,0.3))"
+                            bgGradient={
+                              colorMode === 'light'
+                                ? 'linear(to-r, white,rgba(255,255,255,0.3))'
+                                : 'linear(to-r, gray.800,rgba(26,32,44,0.3))'
+                            }
                             position="relative"
                             minH={['80', '80', '52', '52']}
                             overflowY="scroll"
@@ -361,7 +405,12 @@ export default function Home() {
                                 <Text>{item.description}</Text>
                                 <SimpleGrid columns={2} pt={2}>
                                   <Text fontWeight="semibold">Biaya</Text>
-                                  <Text>: {formatCurrency(item.budget)}</Text>
+                                  <Text>
+                                    :{' '}
+                                    {formatCurrency(
+                                      Number.parseInt(item.budget)
+                                    )}
+                                  </Text>
                                   <Text fontWeight="semibold">
                                     Tanggal Kebutuhan
                                   </Text>
@@ -381,7 +430,7 @@ export default function Home() {
                                     pt={3}
                                   >
                                     {item.tags.map((item, index) => {
-                                      const itemTags = JSON.parse(item);
+                                      const itemTags = item;
                                       return (
                                         <Badge
                                           key={index}
@@ -404,6 +453,40 @@ export default function Home() {
                     </AccordionItem>
                   );
                 })}
+
+                {doneTodo?.length > 0 && (
+                  <Box pt={5}>
+                    <Text fontWeight="semibold" textAlign="center" mb={2}>
+                      List Doa Yang Terkabul
+                    </Text>
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>No</Th>
+                          <Th>Judul</Th>
+                          <Th>Description</Th>
+                          <Th>Tags</Th>
+                        </Tr>
+                      </Thead>
+                      {doneTodo.map((item) => (
+                        <Tbody key={item.id}>
+                          <Tr>
+                            <Td>{item.id}</Td>
+                            <Td>{item.title}</Td>
+                            <Td>{item.description}</Td>
+                            <Td>
+                              {item.tags.map((val) => (
+                                <Flex key={val.label} gap={2}>
+                                  <Badge bg={val.color}>{val.label}</Badge>
+                                </Flex>
+                              ))}
+                            </Td>
+                          </Tr>
+                        </Tbody>
+                      ))}
+                    </Table>
+                  </Box>
+                )}
               </Accordion>
             </TabPanel>
             <TabPanel>
@@ -414,4 +497,40 @@ export default function Home() {
       </Box>
     </Container>
   );
-}
+};
+
+Home.getInitialProps = async (_contex: NextPageContext) => {
+  let todos = [] as TodosType[];
+  let itemDone = [] as TodosType[];
+
+  try {
+    await apiClient
+      .get('/api/todos-bismillah')
+      .then((res) => {
+        todos = res.data?.data;
+        return res.data?.data;
+      })
+      .catch(() => {
+        todos = [];
+      });
+    await apiClient
+      .get('/api/todos-bismillah/done')
+      .then((res) => {
+        itemDone = res.data?.data;
+        return res.data?.data;
+      })
+      .catch(() => {
+        itemDone = [];
+      });
+  } catch (error) {
+    todos = [];
+    itemDone = [];
+  }
+
+  return {
+    todos,
+    itemDone,
+  };
+};
+
+export default Home;

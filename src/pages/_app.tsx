@@ -18,6 +18,7 @@ const config = {
   useSystemColorMode: true,
 };
 
+
 const colors = {
   BluePrimary: {
     100: '#F7FAFC',

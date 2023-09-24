@@ -11,6 +11,8 @@ services:
       - 3310:3310
     networks:
       - my_network
+    environment:
+      - NEXT_PUBLIC_API_URL
   # Add more containers below (nginx, postgres, etc.)
 
 # Define a network, which allows containers to communicate
